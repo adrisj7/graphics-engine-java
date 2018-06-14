@@ -25,7 +25,6 @@ public class CommandRules {
         rules = new HashMap<COMMAND, CommandRule>();
 
         String text = FileHandler.readText(fname);
-        System.out.println("Text: " + text);
         String[] lines = text.split("\n");
         for (String line : lines) {
             if (line.length() == 0) continue;
