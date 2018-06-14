@@ -14,8 +14,7 @@ import animation.LinearKnob;
 import drawing.Color;
 import drawing.Image;
 import math.Vector3f;
-import parser.Parser.CommandInfo.CommandArgument;
-import parser.Parser.CommandInfo.CommandArgument.ARGTYPE;
+//import parser.Parser.CommandInfo.CommandArgument.ARGTYPE;
 import util.FileHandler;
 
 /**
@@ -48,6 +47,16 @@ public class Parser {
         BOX,
         TORUS,
         SAVE,
+    };
+    public enum ARGTYPE {
+        NULL,
+        STRING,
+        NUMBER,
+        KNOB; // TODO: BAD PRACTICE: Never assigned! Please just use a string for a knob
+        // And this is why:
+        public boolean equals(ARGTYPE type) {
+            return type == this || (type == STRING && this == KNOB) || (type == KNOB && this == STRING);
+        }
     };
 
 //    private enum DATATYPE {
@@ -401,6 +410,60 @@ public class Parser {
         }
     }
 
+    /** CommandArgument
+     *      Holds one argument in a command, with it's type.
+     */
+    public static class CommandArgument {
+
+        private ARGTYPE type;
+        private Object object;
+
+        public CommandArgument(Object object) {
+            this.object = object;
+            if (object instanceof String) {
+                type = ARGTYPE.STRING;
+            } else if (object instanceof Float) {
+                type = ARGTYPE.NUMBER;
+            } else {
+                type = ARGTYPE.NULL;
+            }
+        }
+
+        public ARGTYPE getType() {
+            return type;
+        }
+
+        public Object getObject() {
+            return object;
+        }
+
+        /** 
+         * Only use this after verifying this command with CommandRules.java!
+         */
+        public Float getNumber() {
+            return (Float) object;
+        }
+
+        /** 
+         * Only use this after verifying this command with CommandRules.java!
+         */
+        public String getString() {
+            return (String) object;
+        }
+
+        @Override
+        public String toString() {
+            switch (type) {
+                case STRING:
+                    return getString();
+                case NUMBER:
+                    return getNumber().toString();
+                default:
+                    return "[NULL]";
+            }
+        }
+
+    }
     /** CommandInfo
      *      Holds information for a single command
      */
@@ -498,70 +561,6 @@ public class Parser {
             return b.toString();
         }
 
-        /** CommandArgument
-         *      Holds one argument in a command, with it's type.
-         */
-        public static class CommandArgument {
-            enum ARGTYPE {
-                NULL,
-                STRING,
-                NUMBER,
-                KNOB; // TODO: BAD PRACTICE: Never assigned! Please just use a string for a knob
-                // And this is why:
-                public boolean equals(ARGTYPE type) {
-                    return type == this || (type == STRING && this == KNOB) || (type == KNOB && this == STRING);
-                }
-            }
-
-            private ARGTYPE type;
-            private Object object;
-
-            public CommandArgument(Object object) {
-                this.object = object;
-                if (object instanceof String) {
-                    type = ARGTYPE.STRING;
-                } else if (object instanceof Float) {
-                    type = ARGTYPE.NUMBER;
-                } else {
-                    type = ARGTYPE.NULL;
-                }
-            }
-
-            public ARGTYPE getType() {
-                return type;
-            }
-
-            public Object getObject() {
-                return object;
-            }
-
-            /** 
-             * Only use this after verifying this command with CommandRules.java!
-             */
-            public Float getNumber() {
-                return (Float) object;
-            }
-
-            /** 
-             * Only use this after verifying this command with CommandRules.java!
-             */
-            public String getString() {
-                return (String) object;
-            }
-
-            @Override
-            public String toString() {
-                switch (type) {
-                    case STRING:
-                        return getString();
-                    case NUMBER:
-                        return getNumber().toString();
-                    default:
-                        return "[NULL]";
-                }
-            }
-
-        }
     }
 
     @SuppressWarnings("serial")

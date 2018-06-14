@@ -4,9 +4,11 @@ import java.util.HashMap;
 import java.util.ListIterator;
 
 import parser.Parser.COMMAND;
+import parser.Parser.ARGTYPE;
 import parser.Parser.CommandInfo;
-import parser.Parser.CommandInfo.CommandArgument;
-import parser.Parser.CommandInfo.CommandArgument.ARGTYPE;
+import parser.Parser.CommandArgument;
+//import parser.Parser.CommandInfo.CommandArgument;
+//import parser.Parser.CommandInfo.CommandArgument.ARGTYPE;
 import parser.Parser.ParserCompileException;
 import util.FileHandler;
 
@@ -23,9 +25,10 @@ public class CommandRules {
         rules = new HashMap<COMMAND, CommandRule>();
 
         String text = FileHandler.readText(fname);
-
+        System.out.println("Text: " + text);
         String[] lines = text.split("\n");
         for (String line : lines) {
+            if (line.length() == 0) continue;
             if (line.charAt(0) == '#' || line.charAt(0) == '\n') {
                 continue;
             }
