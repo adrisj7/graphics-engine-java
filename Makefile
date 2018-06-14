@@ -22,7 +22,7 @@ $(BIN_FILES): $(JAVA_FILES)
 	javac -classpath $(BINDIR) $^ -d $(BINDIR)
 
 run: all
-	java -classpath $(BINDIR) $(MAINCLASS)
+	java -classpath $(BINDIR) $(MAINCLASS) ${ARGS}
 
 #%.class: $(subst $(BINDIR), $(SRCDIR), %.java)
 #	javac $<
@@ -30,3 +30,4 @@ run: all
 clean:
 	rm -rf $(BINDIR)
 	rm -f $(BIN_FILES)
+	rm -rf images
