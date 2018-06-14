@@ -1,25 +1,23 @@
 
-frames 10
+frames 30
 basename lmao
 basesize 500 500
 background 0 255 255
 
-vary anim 0 9 0 1
+vary anim 0 29 0 1
 
-light 0 1 -1 255 255 0
+light 0 1 1 255 255 255
 
-ambient 50 50 50
+ambient 100 100 100
 
-
-push
 move
-200 200 0 anim
+200 200 0
 rotate
-x 181
+y 180 anim
 rotate
-y 180
-sphere
-0 0 0 100
-pop
+x 180 anim
+
+box
+-50 50 50 100 100 100 res/tnt.png
 
 save

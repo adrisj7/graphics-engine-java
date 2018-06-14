@@ -1,6 +1,6 @@
 package shading;
 
-import image.Color;
+import drawing.Color;
 import math.Vector3f;
 
 public class Light {

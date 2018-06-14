@@ -1,4 +1,6 @@
-package image;
+package drawing;
+
+import java.awt.image.BufferedImage;
 
 import util.FileHandler;
 
@@ -30,6 +32,10 @@ public class Image {
     public void setColor(int x, int y, int r, int g, int b) {
         grid[x][y] = new Color(r, g, b);
     }
+    
+    public void setColor(int x, int y, int rgb) {
+        grid[x][y] = new Color(rgb);
+    }
 
     public void writeToPPM(String fname) {
         StringBuilder text = new StringBuilder("P3\n");
@@ -60,6 +66,22 @@ public class Image {
         return clone;
     }
 
+    /**
+     * Converts a buffered image into OUR kind of image
+     * @param img: a BufferedImage
+     * @return An Image from our library
+     */
+    public static Image toImage(BufferedImage img) {
+        Image result = new Image(img.getWidth(), img.getHeight());
+        for(int yy = 0; yy < result.getHeight(); yy++) {
+            for(int xx = 0; xx < result.getWidth(); xx++) {
+                int rgb = img.getRGB(xx, yy);
+                result.setColor(xx, yy, rgb);
+            }
+        }
+        return result;
+    }
+    
     // TESTING BASIC IMAGE FUNCTIONALITY
     // public static void main(String[] args) {
     // Image img = new Image(300, 300);

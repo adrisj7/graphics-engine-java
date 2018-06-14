@@ -5,9 +5,9 @@ import java.util.HashMap;
 import animation.Animation;
 import animation.Knob;
 import buffers.TriangleBuffer;
-import image.Color;
-import image.Image;
-import image.Renderer;
+import drawing.Color;
+import drawing.Image;
+import drawing.Renderer;
 
 /**
  * This holds everything we use to make the engine work. Basically, initialize

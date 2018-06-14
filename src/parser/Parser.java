@@ -11,7 +11,8 @@ import java.util.regex.Pattern;
 
 import animation.Knob;
 import animation.LinearKnob;
-import image.Color;
+import drawing.Color;
+import drawing.Image;
 import math.Vector3f;
 import parser.Parser.CommandInfo.CommandArgument;
 import parser.Parser.CommandInfo.CommandArgument.ARGTYPE;
@@ -94,9 +95,9 @@ public class Parser {
     public static List<CommandInfo> compileCommands(String rawText) throws ParserCompileException {
         CommandRules rules = new CommandRules("src/parser/commandrules");
 
-        rawText = rawText.toUpperCase();
+//        rawText = rawText.toUpperCase();
 
-        String regex = "([A-Z0-9]+)|(\n)";
+        String regex = "([A-Za-z0-9/.\\-]+)|(\n)";
 
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(rawText);
@@ -121,8 +122,7 @@ public class Parser {
 
             // Try to parse this as a command
             //System.out.println("symbol: " + symbol);
-            COMMAND c = toCommand(symbol);
-
+            COMMAND c = toCommand(symbol.substring(0).toUpperCase());
             if (c != COMMAND.NULL) {
                 // We have a command! wrap up our previous one
                 if (currentCommand != null) {
@@ -279,7 +279,7 @@ public class Parser {
                                 );
 
                         // These aren't really adjusted...
-                        Vector3f areflect = new Vector3f(0.1f, 0.1f, 0.1f);
+                        Vector3f areflect = new Vector3f(0.8f, 0.8f, 0.8f);
                         Vector3f dreflect = new Vector3f(0.5f, 0.5f, 0.5f);
                         Vector3f sreflect = new Vector3f(0.7f, 0.7f, 0.7f);
 
@@ -334,6 +334,20 @@ public class Parser {
                                 );
                         break;
                     case BOX:
+                        if (command.getString(6) != null && !command.getString(6).equals("")) {
+                            Image texture = FileHandler.readImage(command.getString(6));
+                            System.out.println("Texture loaded!");
+                            engine.getBuffer().addBoxTextured(
+                                    command.getNumber(0),
+                                    command.getNumber(1),
+                                    command.getNumber(2),
+                                    command.getNumber(3),
+                                    command.getNumber(4),
+                                    command.getNumber(5),
+                                    texture
+                                    );
+                            
+                        }
                         engine.getBuffer().addBox(
                                 command.getNumber(0),
                                 command.getNumber(1),
@@ -366,7 +380,7 @@ public class Parser {
                         break;
                 }
             }
-            
+
             engine.getRenderer().drawTriangleBufferMesh(engine.getBuffer());
 
             engine.getAnimation().setFrame(frame, engine.getImage());

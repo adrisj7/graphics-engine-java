@@ -1,10 +1,43 @@
 package buffers;
 
+import java.util.LinkedList;
+
+import drawing.Image;
 import math.Matrix;
+import math.Vector2f;
 
 public class TriangleBuffer extends PointBuffer {
 
     public static final int PARAMETRIC_ACCURACY = 20;
+
+    private LinkedList<Vector2f> texCoordinates;
+    private Image texture;
+
+    public TriangleBuffer(Matrix matPoints) {
+        super(matPoints);
+        texCoordinates = new LinkedList<>();
+    }
+
+    public TriangleBuffer() {
+        this(new Matrix(0));
+    }
+
+    // Optional
+    public void addTexCoord(float u, float v) {
+        texCoordinates.add(new Vector2f(u,v));
+    }
+
+    // Optional
+    public void addTexCoordTriangle(float u0, float v0, float u1, float v1, float u2, float v2) {
+        addTexCoord(u0, v0);
+        addTexCoord(u1, v1);
+        addTexCoord(u2, v2);
+    }
+
+    // Optional
+    public void setTexture(Image texture) {
+        this.texture = texture;
+    }
 
     public void addTriangle(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2) {
         addPoint(x0, y0, z0);
@@ -13,7 +46,7 @@ public class TriangleBuffer extends PointBuffer {
     }
 
     /**
-     * Try to delete this. <br>
+     * TODO: Try to delete this. <br>
      * <br>
      * I added it here because I was lazy
      */
@@ -27,35 +60,90 @@ public class TriangleBuffer extends PointBuffer {
         );
     }
 
-    public Matrix genBox(float x, float y, float z, float xl, float yl, float zl) {
+    public Matrix genBox(float x, float y, float z, float xs, float ys, float zs) {
         TriangleBuffer boxBuff = new TriangleBuffer();
 
-        // Cause I was drawing boxes the wrong way yo
-        yl *= -1;
-
         // 3 faces from origin
-        boxBuff.addTriangle(x + xl, y + yl, z, x + xl, y, z, x, y, z);
-        boxBuff.addTriangle(x, y + yl, z, x + xl, y + yl, z, x, y, z);
+        float x1 = x+xs;
+        float y1 = y-ys;
+        float z1 = z-zs;
 
-        boxBuff.addTriangle(x + xl, y, z + zl, x, y, z, x + xl, y, z);
-        boxBuff.addTriangle(x + xl, y, z + zl, x, y, z + zl, x, y, z);
+        //front
+        boxBuff.addTriangle(x, y, z, x1, y1, z, x1, y, z);
+        boxBuff.addTriangle(x, y, z, x, y1, z, x1, y1, z);
 
-        boxBuff.addTriangle(x, y, z + zl, x, y + yl, z + zl, x, y, z);
-        boxBuff.addTriangle(x, y + yl, z + zl, x, y + yl, z, x, y, z);
+        //back
+        boxBuff.addTriangle(x1, y, z1, x, y1, z1, x, y, z1);
+        boxBuff.addTriangle(x1, y, z1, x1, y1, z1, x, y1, z1);
 
-        // 3 other faces from not the origin
-        boxBuff.addTriangle(x + xl, y + yl, z + zl, x + xl, y, z, x + xl, y + yl, z);
-        boxBuff.addTriangle(x + xl, y + yl, z + zl, x + xl, y, z + zl, x + xl, y, z);
+        //right side
+        boxBuff.addTriangle(x1, y, z, x1, y1, z1, x1, y, z1);
+        boxBuff.addTriangle(x1, y, z, x1, y1, z, x1, y1, z1);
+        //left side
+        boxBuff.addTriangle(x, y, z1, x, y1, z, x, y, z);
+        boxBuff.addTriangle(x, y, z1, x, y1, z1, x, y1, z);
 
-        boxBuff.addTriangle(x + xl, y + yl, z + zl, x, y + yl, z + zl, x, y, z + zl);
-        boxBuff.addTriangle(x + xl, y, z + zl, x + xl, y + yl, z + zl, x, y, z + zl);
+        //top
+        boxBuff.addTriangle(x, y, z1, x1, y, z, x1, y, z1);
+        boxBuff.addTriangle(x, y, z1, x, y, z, x1, y, z);
+        //bottom
+        boxBuff.addTriangle(x, y1, z, x1, y1, z1, x1, y1, z);
+        boxBuff.addTriangle(x, y1, z, x, y1, z1, x1, y1, z1);
 
-        boxBuff.addTriangle(x + xl, y + yl, z + zl, x + xl, y + yl, z, x, y + yl, z);
-        boxBuff.addTriangle(x, x + yl, z, x, y + yl, z + zl, x + xl, y + yl, z + zl);
 
         Matrix toCopy = new Matrix(0);
         boxBuff.getPoints().copyTo(toCopy);
         return toCopy;
+    }
+
+    // Dear got delete this
+    private void tempAddSquareTexture() {
+        // Flat, it works
+//        addTexCoordTriangle(0, 0, 1, 1, 0, 1);
+//        addTexCoordTriangle(0, 0, 1, 1, 1, 0); 
+
+        addTexCoordTriangle(0, 1, 0, 0, 1, 1);
+//        addTexCoordTriangle(0, 0, 0, 0, 0, 0);
+        addTexCoordTriangle( 1, 1, 0, 0,  1, 0);
+    }
+    public void addBoxTextured(float x, float y, float z, float xs, float ys, float zs, Image texture) {
+
+        setTexture(texture);
+
+        // 3 faces from origin
+        float x1 = x+xs;
+        float y1 = y-ys;
+        float z1 = z-zs;
+
+        tempAddSquareTexture();
+        //front
+        addTriangle(x, y, z, x1, y1, z, x1, y, z);
+        addTriangle(x, y, z, x, y1, z, x1, y1, z);
+
+        tempAddSquareTexture();
+        //back
+        addTriangle(x1, y, z1, x, y1, z1, x, y, z1);
+        addTriangle(x1, y, z1, x1, y1, z1, x, y1, z1);
+
+        tempAddSquareTexture();
+        //right side
+        addTriangle(x1, y, z, x1, y1, z1, x1, y, z1);
+        addTriangle(x1, y, z, x1, y1, z, x1, y1, z1);
+
+        tempAddSquareTexture();
+        //left side
+        addTriangle(x, y, z1, x, y1, z, x, y, z);
+        addTriangle(x, y, z1, x, y1, z1, x, y1, z);
+
+        tempAddSquareTexture();
+        //top
+        addTriangle(x, y, z1, x1, y, z, x1, y, z1);
+        addTriangle(x, y, z1, x, y, z, x1, y, z);
+
+        tempAddSquareTexture();
+        //bottom
+        addTriangle(x, y1, z, x1, y1, z1, x1, y1, z);
+        addTriangle(x, y1, z, x, y1, z1, x1, y1, z1);
     }
 
     public Matrix addBox(float x, float y, float z, float xlength, float ylength, float zlength) {
@@ -159,5 +247,13 @@ public class TriangleBuffer extends PointBuffer {
     public void addTorus(float x, float y, float z, float rCircle, float rTorus) {
         Matrix torusMat = genTorus(x, y, z, rCircle, rTorus);
         addPoints(torusMat);
+    }
+
+    public LinkedList<Vector2f> getTextureCoordinates() {
+        return texCoordinates;
+    }
+
+    public Image getTexture() {
+        return texture;
     }
 }

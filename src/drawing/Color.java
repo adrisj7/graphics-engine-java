@@ -1,4 +1,4 @@
-package image;
+package drawing;
 
 public class Color {
 
@@ -8,6 +8,10 @@ public class Color {
 
 	public Color(int r, int g, int b) {
 		color = (r << 16) + (g << 8) + b;
+	}
+	
+	public Color(int rgb) {
+	    color = rgb;
 	}
 
 	public int getR() {

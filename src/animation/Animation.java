@@ -3,7 +3,7 @@ package animation;
 import java.io.File;
 import java.io.IOException;
 
-import image.Image;
+import drawing.Image;
 
 public class Animation {
 

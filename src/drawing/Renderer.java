@@ -1,11 +1,14 @@
-package image;
+package drawing;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import buffers.TriangleBuffer;
 import math.Matrix;
+import math.Vector2f;
 import math.Vector3f;
 import shading.Light;
+import util.FileHandler;
 
 public class Renderer {
 
@@ -151,16 +154,95 @@ public class Renderer {
         }
     }
 
+    public void drawScanLine(int x0, int y, float z0, int x1, float z1) {
+        int xmin = Math.min(x0, x1);
+        int xmax = Math.max(x0, x1);
+        float dzdx = (z1 - z0) / (float)(x1 - x0);
+        for(int xx = xmin; xx <= xmax; xx++) {
+            float zz = z0 + (xx-xmin)*dzdx;
+            plot(xx, y, zz);
+        }
+    }
+
+    // But with a texture!
+    // ypercent: What percentage of the way we've passed VERTICALLY through our triangle
+    public void drawScanLine(int x0, int y, float z0, int x1, float z1, 
+            float ypercent, boolean secondPass, Vector2f ttop, Vector2f tmid, Vector2f tbot, Image texture, Color lightColor) {
+
+        // Should be constant but whatever
+//        float lightMixFactor = 0.5f;
+        
+        int xmin = Math.min(x0, x1);
+        int xmax = Math.max(x0, x1);
+        
+        // The left coordinate to "scanline" from
+        // The right coordinate to "scanline" from
+        Vector2f uvLeft;
+        Vector2f uvRight;
+
+        if (secondPass) {
+            // Get an interpolation between the mid and bot
+            uvLeft = Vector2f.getDelta(tmid, ttop).multiply(ypercent).add(tmid);
+        } else {
+            // Get an interpolation between the top and mid
+            uvLeft = Vector2f.getDelta(tbot, tmid).multiply(ypercent).add(tbot);            
+        }
+        // Get an interpolation between the top and bot
+        uvRight = Vector2f.getDelta(tbot, ttop).multiply(ypercent).add(tbot);
+//        System.out.println(ypercent + ", " + Vector2f.getDelta(tmid, ttop));
+
+        float dzdx = (z1 - z0) / (float)(x1 - x0);
+        for(int xx = xmin; xx <= xmax; xx++) {
+            float zz = z0 + (xx-xmin)*dzdx;
+
+            // Get our texture coordinate!
+
+            // The percentage of this scanline
+            float xpercent = (float) (xx - xmin) / (float)(xmax - xmin);
+            Vector2f uvCurrent = Vector2f.getDelta(uvLeft, uvRight).multiply(xpercent).add(uvLeft);
+            float u = uvCurrent.getX();
+            float v = uvCurrent.getY();
+            if (u < 1.0 && v < 1.0 && u >= 0 && v >= 0) {
+//                System.out.println(u*image.getWidth() + ", " + v*image.getHeight());
+                Color c = texture.getColor((int) (u*texture.getWidth()), (int) (v*texture.getHeight()));
+                // Multiplicative blending?
+                float rfactor = (float)lightColor.getR() / 255f;
+                float gfactor = (float)lightColor.getG() / 255f;
+                float bfactor = (float)lightColor.getB() / 255f;
+                setColor(new Color((int)(rfactor*c.getR()), (int)(gfactor*c.getG()), (int)(bfactor*c.getB())));
+            } else {
+//                Color c = new Color(255, 0, 0);
+//                setColor(c);
+            }
+            plot(xx, y, zz);
+        }
+    }
+
     public void drawTriangleBufferMesh(TriangleBuffer buffer) {
         Matrix mat = buffer.getPoints();
+        LinkedList<Vector2f> texcoords = buffer.getTextureCoordinates();
+        Iterator<Vector2f> texcoordIterator = texcoords.iterator();
+        // Should we use textures?
+        boolean useTexture = !texcoords.isEmpty();
+
         int col;
         for (col = 0; col < mat.getColCount(); col += 3) {
             if (col >= mat.getColCount() || col + 2 >= mat.getColCount())
                 break;
 
+            // Our main vertices
             Vector3f p0 = mat.getColumnVector(col);
             Vector3f p1 = mat.getColumnVector(col + 1);
             Vector3f p2 = mat.getColumnVector(col + 2);
+            // Our main texture vertices
+            Vector2f t0 = null,
+                     t1 = null,
+                     t2 = null;
+            if (useTexture) {
+                t0 = texcoordIterator.hasNext() ? texcoordIterator.next() : new Vector2f(0,0);
+                t1 = texcoordIterator.hasNext() ? texcoordIterator.next() : new Vector2f(0,0);
+                t2 = texcoordIterator.hasNext() ? texcoordIterator.next() : new Vector2f(0,0);
+            }
 
             Vector3f d1 = Vector3f.getDelta(p0, p1);
             Vector3f d2 = Vector3f.getDelta(p0, p2);
@@ -174,45 +256,60 @@ public class Renderer {
                 continue; // Skip this triangle
             }
 
-            // TODO: Lighting goes here
             Vector3f lightSum = new Vector3f(0,0,0);
             for(Light l : lights) {
                 lightSum.add(l.getSurfaceLightingVec(normal, view));
             }
-            Color p = new Color( (int) lightSum.getX(), (int) lightSum.getY(), (int) lightSum.getZ() );
+            Color lightColor = new Color( (int) lightSum.getX(), (int) lightSum.getY(), (int) lightSum.getZ() );
             //Color p = new Color((int) (255 * Math.random()), (int) (255 * Math.random()), (int) (255 * Math.random()));
-            setColor(p);
+            setColor(lightColor);
 
             // SCANLINE
 
             // Pick top, bottom and middle points
             Vector3f ptop, pmid, pbot; // y
+            Vector2f ttop, tmid, tbot;
             if (p0.getY() > p1.getY() && p0.getY() > p2.getY()) {
                 ptop = p0;
+                ttop = t0;
                 if (p1.getY() > p2.getY()) {
                     pmid = p1;
                     pbot = p2;
+                    tmid = t1;
+                    tbot = t2;
                 } else {
                     pmid = p2;
                     pbot = p1;
+                    tmid = t2;
+                    tbot = t1;
                 }
             } else if (p1.getY() > p0.getY() && p1.getY() > p2.getY()) {
                 ptop = p1;
+                ttop = t1;
                 if (p2.getY() > p0.getY()) {
                     pmid = p2;
                     pbot = p0;
+                    tmid = t2;
+                    tbot = t0;
                 } else {
                     pmid = p0;
                     pbot = p2;
+                    tmid = t0;
+                    tbot = t2;
                 }
             } else {
                 ptop = p2;
+                ttop = t2;
                 if (p1.getY() > p0.getY()) {
                     pmid = p1;
                     pbot = p0;
+                    tmid = t1;
+                    tbot = t0;
                 } else {
                     pmid = p0;
                     pbot = p1;
+                    tmid = t0;
+                    tbot = t1;
                 }
             }
 
@@ -237,8 +334,20 @@ public class Renderer {
 
             boolean flip = false;
             while (y <= (int) ptop.getY()) {
-                drawLine((int) x0, (int) y, (float) z0, (int) x1, (int) y, (float) z1);
+                if (useTexture) {
+                    // A scanline, with texture support!
+                    float ypercent;
+                    if (flip) {
+                        ypercent = ((float) (y) - pmid.getY()) / (float)(distance2);
 
+                    } else {
+                        ypercent = ((float) (y) - pbot.getY()) / (float)(distance1);
+                    }
+                   drawScanLine((int) x0, (int) y, (float) z0, (int) x1, (float) z1, ypercent, flip, ttop, tmid, tbot, buffer.getTexture(), lightColor);
+                } else {
+                    // Just a regular scanline
+                    drawScanLine((int) x0, (int) y, (float) z0, (int) x1, (float) z1);
+                }
                 x0 += dx0;
                 x1 += dx1;
                 z0 += dz0;
@@ -282,21 +391,34 @@ public class Renderer {
 
     // TRIANGLEBUFFER RENDERING TEST
     public static void main(String[] args) {
+
         Image img = new Image(300, 300);
         Renderer r = new Renderer(img);
         r.setColor(new Color(255, 255, 255));
         r.refill();
 
+        // These aren't really adjusted...
+        Vector3f areflect = new Vector3f(0.8f, 0.8f, 0.8f);
+        Vector3f dreflect = new Vector3f(0.5f, 0.5f, 0.5f);
+        Vector3f sreflect = new Vector3f(0.7f, 0.7f, 0.7f);
+        r.addLight(new Vector3f(0, 1, 1), new Color(100, 100, 100), new Color(255, 255, 255), areflect, dreflect, sreflect);
+
         TriangleBuffer buff = new TriangleBuffer();
-        buff.translate(150, 150, 0);
-        buff.transformPush();
-            buff.rotateY(90);
-            buff.rotateX(20);
-            buff.addTorus(0, 0, 0, 30, 100);
-        buff.transformPop();
-        buff.rotateY(30);
-        buff.rotateX(-20);
-        buff.addSphere(0, 0, 0, 60);
+        buff.translate(100, 300, 100);
+        buff.rotateY(10);
+        buff.rotateX(10);
+        buff.addBoxTextured(-50, -50, -50, 50, 50, 100, FileHandler.readImage("res/test.png"));
+//          buff.addBox(-50, -50, -50, 50, 50, 100);
+
+//        buff.translate(150, 150, 0);
+//        buff.transformPush();
+//            buff.rotateY(90);
+//            buff.rotateX(20);
+//            buff.addTorus(0, 0, 0, 30, 100);
+//        buff.transformPop();
+//        buff.rotateY(30);
+//        buff.rotateX(-20);
+//        buff.addSphere(0, 0, 0, 60);
 
         r.drawTriangleBufferMesh(buff);
         img.writeToPPM("images/test.ppm");
