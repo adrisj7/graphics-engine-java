@@ -9,11 +9,14 @@ JAVA_FILES = $(shell find $(SRCDIR)/ -type f -name '*.java')
 BIN_FILES = $(subst $(SRCDIR), $(BINDIR), $(JAVA_FILES:.java=.class))
 #$(patsubst $(JAVA_FILES), $(BINDIR)/%.javac, $(JAVA_FILES))
 
-all: bindir_exists $(BIN_FILES)
+all: images bindir_exists $(BIN_FILES)
 	$(echo $(BIN_FILES))
 
 bindir_exists:
 	mkdir -p $(BINDIR)
+
+images:
+	mkdir -p images
 
 $(BIN_FILES): $(JAVA_FILES)
 	javac -classpath $(BINDIR) $^ -d $(BINDIR)
