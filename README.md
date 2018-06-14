@@ -43,6 +43,28 @@ Here are the extra commands that were added:
 
 - Texture mapping is wonky, but semi-functional. You can see from my gallery submission that in some situations, texture mapping works, but in most other situations it totally doesn't. It might have something to do with the way I determine the texture vertices. I'll have to look into that.
 
+- When generating gifs and overriting them, the folder to store the gif files is not deleted. This means that when generating a gif that has less frames but the same name as another gif, they will overlap once the first gif is done. This could be fixed by deleting all files in the folder before compiling the gif files, or by compiling them with a limit in animation/Animation.java.
+
 ## User Instructions:
 
-TBD
+You should be able to just run
+
+`make run`
+
+and the engine will run the script file found in `src/script`.
+
+TO RUN OTHER SCRIPT FILES:
+
+`make ARGS="<script file goes here>" run`
+
+For instance
+
+`make ARGS="scr/scriptKnobSphere" run`
+
+TO VIEW THE IMAGE YOU CREATED:
+
+`animate <image goes here`
+
+For instance
+
+`animate images/lmao.gif`
